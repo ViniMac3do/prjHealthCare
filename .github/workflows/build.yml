@@ -17,19 +17,24 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version: '18'  # Altere a versão se necessário
+
+      - name: Check Node and npm version
+        run: |
+          node -v
+          npm -v
+
+      - name: Clear npm cache
+        run: npm cache clean --force
 
       - name: Install dependencies
-        run: |
-          npm install
+        run: npm install --legacy-peer-deps
 
-      - name: Setup Java & Android SDK
-        uses: reactivecircus/android-emulator-runner@v2
+      - name: Set up Android SDK
+        uses: react-native-community/github-actions/setup-android@v2
         with:
-          api-level: 33
-          target: default
-          arch: x86_64
-          profile: Nexus 6
+          android-ndk-version: '21.3.6528147'
+          android-sdk-version: '30.0.3'
 
       - name: Build APK
         run: |
