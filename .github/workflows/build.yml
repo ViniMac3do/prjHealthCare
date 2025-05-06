@@ -3,7 +3,7 @@ name: Build APK
 on:
   push:
     branches:
-      - master # ou a branch que você usa
+      - master  # ou a branch que você usa
 
 jobs:
   build:
@@ -17,54 +17,45 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v3
         with:
-          node-version: '18'  # Altere a versão se necessário
+          node-version: '18'  # Altere se necessário
 
-      - name: Check Node and npm version
+      - name: Verificar Node e npm
         run: |
           node -v
           npm -v
 
-      - name: Clear npm cache
+      - name: Limpar cache do npm
         run: npm cache clean --force
 
-      - name: Install dependencies
+      - name: Instalar dependências
         run: npm install --legacy-peer-deps
 
-      - name: Install OpenJDK 8
+      - name: Instalar e configurar OpenJDK 8
         run: |
-          echo "Instalando o OpenJDK 8..."
           sudo apt update
           sudo apt install -y openjdk-8-jdk
-          
-          # Definir o JDK 8 como a versão padrão
           sudo update-alternatives --set java /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java
           sudo update-alternatives --set javac /usr/lib/jvm/java-8-openjdk-amd64/bin/javac
-
-          # Verificando a versão
           java -version
           javac -version
-
           if ! java -version 2>&1 | grep -q "1.8"; then
             echo "JDK 8 não encontrado!"
             exit 1
           fi
 
-      - name: Install Android SDK
+      - name: Instalar Android SDK
         run: |
-          echo "Instalando o Android SDK..."
           sudo apt install -y wget unzip
-          wget https://dl.google.com/android/repository/commandlinetools-linux-7583922_latest.zip
-          unzip commandlinetools-linux-7583922_latest.zip
-          yes | ./cmdline-tools/bin/sdkmanager --sdk_root=$HOME/Android/Sdk "platforms;android-30" "build-tools;30.0.3" "ndk;21.3.6528147"
-          echo "Android SDK instalado com sucesso."
-          echo "Verificando a instalação do SDK..."
-          $HOME/Android/Sdk/cmdline-tools/bin/sdkmanager --list
+          mkdir -p $HOME/Android/Sdk/cmdline-tools
+          wget https://dl.google.com/android/repository/commandlinetools-linux-7583922_latest.zip -O sdk-tools.zip
+          unzip -q sdk-tools.zip -d $HOME/Android/Sdk/cmdline-tools
+          mv $HOME/Android/Sdk/cmdline-tools/cmdline-tools $HOME/Android/Sdk/cmdline-tools/latest
+          yes | $HOME/Android/Sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/Android/Sdk "platforms;android-30" "build-tools;30.0.3" "ndk;21.3.6528147"
           echo "export ANDROID_SDK_ROOT=$HOME/Android/Sdk" >> $GITHUB_ENV
-          echo "export PATH=$ANDROID_SDK_ROOT/cmdline-tools/bin:$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/tools:$PATH" >> $GITHUB_ENV
+          echo "export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/tools:$PATH" >> $GITHUB_ENV
 
       - name: Build APK
         run: |
-          echo "Iniciando a build do APK..."
           cd android
           ./gradlew clean
           ./gradlew assembleDebug --stacktrace
