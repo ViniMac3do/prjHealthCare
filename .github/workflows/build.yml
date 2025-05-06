@@ -32,10 +32,10 @@ jobs:
 
       - name: Install OpenJDK 8
         run: |
+          echo "Instalando o OpenJDK 8..."
           sudo apt update
           sudo apt install -y openjdk-8-jdk
           java -version
-          # Verifica se o JDK 8 foi instalado corretamente
           if ! java -version 2>&1 | grep -q "1.8"; then
             echo "JDK 8 não encontrado!"
             exit 1
@@ -43,22 +43,23 @@ jobs:
 
       - name: Install Android SDK
         run: |
+          echo "Instalando o Android SDK..."
           sudo apt install -y wget unzip
           wget https://dl.google.com/android/repository/commandlinetools-linux-7583922_latest.zip
           unzip commandlinetools-linux-7583922_latest.zip
           yes | ./cmdline-tools/bin/sdkmanager --sdk_root=$HOME/Android/Sdk "platforms;android-30" "build-tools;30.0.3" "ndk;21.3.6528147"
-          # Verificando se a instalação foi bem-sucedida
           echo "Android SDK instalado com sucesso."
+          echo "Verificando a instalação do SDK..."
+          $HOME/Android/Sdk/cmdline-tools/bin/sdkmanager --list
           echo "export ANDROID_SDK_ROOT=$HOME/Android/Sdk" >> $GITHUB_ENV
           echo "export PATH=$ANDROID_SDK_ROOT/cmdline-tools/bin:$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/tools:$PATH" >> $GITHUB_ENV
-          echo "Verificando a instalação do SDK"
-          $HOME/Android/Sdk/tools/bin/sdkmanager --list
 
       - name: Build APK
         run: |
+          echo "Iniciando a build do APK..."
           cd android
           ./gradlew clean
-          ./gradlew assembleDebug
+          ./gradlew assembleDebug --stacktrace
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
