@@ -35,6 +35,8 @@ jobs:
           echo "Instalando o OpenJDK 8..."
           sudo apt update
           sudo apt install -y openjdk-8-jdk
+          # Configurando JDK 8 como padrão
+          sudo update-alternatives --config java
           java -version
           if ! java -version 2>&1 | grep -q "1.8"; then
             echo "JDK 8 não encontrado!"
