@@ -3,7 +3,7 @@ name: Build APK
 on:
   push:
     branches:
-      - main # ou a branch que você usa
+      - master# ou a branch que você usa
 
 jobs:
   build:
