@@ -1,0 +1,67 @@
+name: Build APK
+
+on:
+  push:
+    branches:
+      - master  # ou a branch que você usa
+
+jobs:
+  build:
+    name: Build APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'  # Altere se necessário
+
+      - name: Verificar Node e npm
+        run: |
+          node -v
+          npm -v
+
+      - name: Limpar cache do npm
+        run: npm cache clean --force
+
+      - name: Instalar dependências
+        run: npm install --legacy-peer-deps
+
+      - name: Instalar e configurar OpenJDK 8
+        run: |
+          sudo apt update
+          sudo apt install -y openjdk-8-jdk
+          sudo update-alternatives --set java /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java
+          sudo update-alternatives --set javac /usr/lib/jvm/java-8-openjdk-amd64/bin/javac
+          java -version
+          javac -version
+          if ! java -version 2>&1 | grep -q "1.8"; then
+            echo "JDK 8 não encontrado!"
+            exit 1
+          fi
+
+      - name: Instalar Android SDK
+        run: |
+          sudo apt install -y wget unzip
+          mkdir -p $HOME/Android/Sdk/cmdline-tools
+          wget https://dl.google.com/android/repository/commandlinetools-linux-7583922_latest.zip -O sdk-tools.zip
+          unzip -q sdk-tools.zip -d $HOME/Android/Sdk/cmdline-tools
+          mv $HOME/Android/Sdk/cmdline-tools/cmdline-tools $HOME/Android/Sdk/cmdline-tools/latest
+          yes | $HOME/Android/Sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/Android/Sdk "platforms;android-30" "build-tools;30.0.3" "ndk;21.3.6528147"
+          echo "export ANDROID_SDK_ROOT=$HOME/Android/Sdk" >> $GITHUB_ENV
+          echo "export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/tools:$PATH" >> $GITHUB_ENV
+
+      - name: Build APK
+        run: |
+          cd android
+          ./gradlew clean
+          ./gradlew assembleDebug --stacktrace
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug.apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
