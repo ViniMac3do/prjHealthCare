@@ -6,6 +6,8 @@ import IMCScreen from './pages/src/imc';
 import VacinaScreen from './pages/src/vacinas';
 import LoadingScreen from './pages/src/loading';
 import LoginScreen from './pages/src/login';
+import CadastroScreen from './pages/src/cadastro';
+
 
 const Stack = createStackNavigator();
 
@@ -22,6 +24,7 @@ export default function App() {
         <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen name="IMC" component={IMCScreen} />
         <Stack.Screen name="Vacina" component={VacinaScreen} />
+        <Stack.Screen name="Cadastro" component={CadastroScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

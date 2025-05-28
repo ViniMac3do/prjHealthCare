@@ -1,19 +1,52 @@
-import React, { useState } from 'react';
-import { View, Text, Pressable, Image, ScrollView, Modal, FlatList, Button } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, Pressable, Image, ScrollView, Modal, FlatList, Button, Alert } from 'react-native';
+import axios from 'axios';
 import styles from './style';
 
-const HomeScreen = ({ navigation }) => {
+const HomeScreen = ({ navigation, route }) => {
   const [modalVisible, setModalVisible] = useState(false);
+  const [dadosUsuario, setDadosUsuario] = useState([]);
+  const { emailUsuario } = route.params;
 
-  const dadosUsuario = [
-    {
-      id: 1,
-      nome: 'Jair Messias Inácio da Silva',
-      cartaoSus: '9002 8922 1234',
-      unidade: 'UBS Jardim Nelia',
-      proxConsulta: '10/05/2025 - Clínica geral',
+  console.log('Email recebido da tela de login:', emailUsuario);
+
+  const pegarDados = async () => {
+        try {
+         const dados = await axios.get(`http://127.0.0.1:8000/api/usuarios?email=${emailUsuario}`);
+
+          console.log('Resposta da API:', dados.data);
+    
+          const usuario = dados.data;
+          
+          if (!usuario.cepUsuario) {
+            console.warn('CEP do usuário está vazio!');
+            return;
+          }
+
+          const respostaCep = await axios.get(`https://viacep.com.br/ws/${usuario.cepUsuario}/json/`);
+          const ubs = respostaCep.data;
+          
+          const dadosFiltrados = [{
+            id: usuario.id,
+            nome: usuario.nome,
+            cartaoSus: usuario.cartao_sus,
+            unidade: `UBS - ${ubs.localidade}, ${ubs.uf}`,
+            proxConsulta: `10/05/2025 - ${ubs.localidade}`,
+          }];
+
+          setDadosUsuario(dadosFiltrados);
+        
+        } catch (erro) {
+          console.error('Erro na requisição:', erro);
+          Alert.alert('Erro', 'Erro ao conectar com o servidor.');
+        }
+  };
+
+  useEffect(() => {
+    if (emailUsuario) {
+      pegarDados();
     }
-  ];
+  }, [emailUsuario]);
 
   const sectionNoticias = [
     {
@@ -97,7 +130,7 @@ const HomeScreen = ({ navigation }) => {
     <View style={styles.container}>
       {/* Navbar Superior */}
       <View style={styles.navSuperior}>
-        <Text style={styles.navText}>Bem-vindo, Usuário!</Text>
+        <Text style={styles.navText}>Bem-vindo, {dadosUsuario.length > 0 ? dadosUsuario[0].nome : 'Usuario'}!</Text>
       </View>
 
       {/* Modal de Configurações */}
@@ -173,12 +206,15 @@ const HomeScreen = ({ navigation }) => {
         />
 
         <Text style={styles.title}>Seus Dados de Saúde</Text>
+        {dadosUsuario.length > 0 && (
         <View style={styles.perfil}>
           <Text style={styles.info}><Text style={styles.bold}>Nome:</Text> {dadosUsuario[0].nome}</Text>
           <Text style={styles.info}><Text style={styles.bold}>Cartão SUS:</Text> {dadosUsuario[0].cartaoSus}</Text>
           <Text style={styles.info}><Text style={styles.bold}>Unidade:</Text> {dadosUsuario[0].unidade}</Text>
           <Text style={styles.info}><Text style={styles.bold}>Próxima Consulta:</Text> {dadosUsuario[0].proxConsulta}</Text>
         </View>
+      )}
+
 
       </ScrollView>
 
