@@ -20,8 +20,7 @@ const CadastroScreen = ({ navigation }) => {
   const [carregando, setCarregando] = useState(false); 
   const [errorMessage, setErrorMessage] = useState(''); 
 
-  // validar se os campos estão preenchidos
-  const validarDados = () => {
+   const validarDados = () => {
     if (
       !nomeUsuario ||
       !cartaoSus ||
@@ -36,7 +35,6 @@ const CadastroScreen = ({ navigation }) => {
       return false;
     }
 
-    // Validação de senha
     if (senhaUsuario.length < 6) {
       Alert.alert('Erro', 'A senha precisa ter pelo menos 6 caracteres.');
       return false;
@@ -45,7 +43,7 @@ const CadastroScreen = ({ navigation }) => {
     return true;
   };
 
-  const handleCadastro = async () => {
+  const cadastrar = async () => {
     if (validarDados()) {
       setCarregando(true); 
 
@@ -61,16 +59,17 @@ const CadastroScreen = ({ navigation }) => {
       };
 
       try {
-        const response = await axios.post('http://127.0.0.1:8000/api/usuarios', dadosUsuario);
-
-        if (response.data.success) {
-          Alert.alert('Sucesso', 'Cadastro realizado com sucesso!');
-          navigation.navigate('Home');
+        const enviarDados = await axios.post('http://127.0.0.1:8000/api/usuarios', dadosUsuario);
+        console.log('Resposta da API:', enviarDados.data);
+        
+        if (enviarDados.data && enviarDados.data.email) {
+          Alert.alert('Sucesso', 'Cadastro realizado com sucesso! Volte e logue com seus dados');
+          navigation.navigate('Login');
         } else {
-          setErrorMessage(response.data.message || 'Erro no cadastro');
+          Alert.alert('Erro', 'Erro no cadastro. Tente novamente!'); 
         }
       } catch (error) {
-        console.error(error);
+        console.error('Erro na requisição:', error);
         Alert.alert('Erro', 'Erro ao cadastrar. Tente novamente!');
       } finally {
         setCarregando(false); 
@@ -157,7 +156,7 @@ const CadastroScreen = ({ navigation }) => {
 
         <Button
           title={carregando ? 'Cadastrando...' : 'Cadastrar'}
-          onPress={handleCadastro}
+          onPress={cadastrar}
           color="#6BBF8A"
           disabled={carregando} // Desabilitar o botão enquanto carrega
         />

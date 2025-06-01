@@ -5,41 +5,25 @@ import styles from './style';
 
 const HomeScreen = ({ navigation, route }) => {
   const [modalVisible, setModalVisible] = useState(false);
-  const [dadosUsuario, setDadosUsuario] = useState([]);
-  const { emailUsuario } = route.params;
+  const [usuario, setUsuario] = useState(null);
+  const [ubs, setUbs] = useState(null);
+
+  const emailUsuario = route?.params?.emailUsuario ?? 'email não enviado';
 
   console.log('Email recebido da tela de login:', emailUsuario);
 
   const pegarDados = async () => {
-        try {
-         const dados = await axios.get(`http://127.0.0.1:8000/api/usuarios?email=${emailUsuario}`);
+    try {
+      const dados = await axios.get(`http://127.0.0.1:8000/api/usuarios/email/${emailUsuario}`);
+      console.log('Resposta da API para o get na tela home:', dados.data);
+      setUsuario(dados.data);
 
-          console.log('Resposta da API:', dados.data);
-    
-          const usuario = dados.data;
-          
-          if (!usuario.cepUsuario) {
-            console.warn('CEP do usuário está vazio!');
-            return;
-          }
-
-          const respostaCep = await axios.get(`https://viacep.com.br/ws/${usuario.cepUsuario}/json/`);
-          const ubs = respostaCep.data;
-          
-          const dadosFiltrados = [{
-            id: usuario.id,
-            nome: usuario.nome,
-            cartaoSus: usuario.cartao_sus,
-            unidade: `UBS - ${ubs.localidade}, ${ubs.uf}`,
-            proxConsulta: `10/05/2025 - ${ubs.localidade}`,
-          }];
-
-          setDadosUsuario(dadosFiltrados);
-        
-        } catch (erro) {
-          console.error('Erro na requisição:', erro);
-          Alert.alert('Erro', 'Erro ao conectar com o servidor.');
-        }
+      const respostaCep = await axios.get(`https://viacep.com.br/ws/${dados.data.cep}/json/`);
+      setUbs(respostaCep.data);
+    } catch (erro) {
+      console.error('Erro na requisição:', erro);
+      Alert.alert('Erro', 'Erro ao conectar com o servidor.');
+    }
   };
 
   useEffect(() => {
@@ -130,7 +114,7 @@ const HomeScreen = ({ navigation, route }) => {
     <View style={styles.container}>
       {/* Navbar Superior */}
       <View style={styles.navSuperior}>
-        <Text style={styles.navText}>Bem-vindo, {dadosUsuario.length > 0 ? dadosUsuario[0].nome : 'Usuario'}!</Text>
+        <Text style={styles.navText}>Bem-vindo, {usuario?.nome ?? 'Usuário'}!</Text>
       </View>
 
       {/* Modal de Configurações */}
@@ -151,23 +135,23 @@ const HomeScreen = ({ navigation, route }) => {
         {/* Boas-vindas */}
         <View style={styles.welcomeSection}>
           <Image
-           source={require('../../../assets/Healthbg.png')}
-           style={styles.logo}
+            source={require('../../../assets/Healthbg.png')}
+            style={styles.logo}
           />
           <Text style={styles.wlcomeText}>
             Explore os serviços, notícias e campanhas de saúde disponíveis.
           </Text>
           <View style={styles.welcomesButton}>
             <Button
-            title='Calcule IMC'
-            onPress={() => navigation.navigate('IMC')}
-            color="#6BBF8A"
+              title='Calcule IMC'
+              onPress={() => navigation.navigate('IMC')}
+              color="#6BBF8A"
             />
 
             <Button
-            title='Ver vacinas'
-            onPress={() => navigation.navigate('Vacina')}
-            color="#6BBF8A"
+              title='Ver vacinas'
+              onPress={() => navigation.navigate('Vacina')}
+              color="#6BBF8A"
             />
           </View>
         </View>
@@ -206,15 +190,14 @@ const HomeScreen = ({ navigation, route }) => {
         />
 
         <Text style={styles.title}>Seus Dados de Saúde</Text>
-        {dadosUsuario.length > 0 && (
-        <View style={styles.perfil}>
-          <Text style={styles.info}><Text style={styles.bold}>Nome:</Text> {dadosUsuario[0].nome}</Text>
-          <Text style={styles.info}><Text style={styles.bold}>Cartão SUS:</Text> {dadosUsuario[0].cartaoSus}</Text>
-          <Text style={styles.info}><Text style={styles.bold}>Unidade:</Text> {dadosUsuario[0].unidade}</Text>
-          <Text style={styles.info}><Text style={styles.bold}>Próxima Consulta:</Text> {dadosUsuario[0].proxConsulta}</Text>
-        </View>
-      )}
-
+        {usuario && ubs && (
+          <View style={styles.perfil}>
+            <Text style={styles.info}><Text style={styles.bold}>Nome:</Text> {usuario.nome}</Text>
+            <Text style={styles.info}><Text style={styles.bold}>Cartão SUS:</Text> {usuario.cartao_sus}</Text>
+            <Text style={styles.info}><Text style={styles.bold}>Unidade:</Text> {`UBS - ${ubs.localidade}, ${ubs.uf}`}</Text>
+            <Text style={styles.info}><Text style={styles.bold}>Próxima Consulta:</Text> {`10/05/2025 - ${ubs.localidade}`}</Text>
+          </View>
+        )}
 
       </ScrollView>
 
